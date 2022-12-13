@@ -2,6 +2,8 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import App from "./App";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 import { store } from "./app/store";
@@ -16,6 +18,7 @@ root.render(
           <Route path="/*" element={<App />} />
         </Routes>
       </Router>
+      <ToastContainer/>
     </Provider>
   </React.StrictMode>
 );
