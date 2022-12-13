@@ -8,7 +8,6 @@ const DashFooter = () => {
     
     const onGoHomeClicked = () => navigate('/dash')
     
-    let goHomeButton = null
   return (
     <footer className='dash-footer'>
         {pathname !== '/dash' ? (
