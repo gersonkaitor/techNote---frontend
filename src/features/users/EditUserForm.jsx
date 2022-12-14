@@ -1,24 +1,30 @@
 import { useState, useEffect } from "react";
-import { useAddNewUserMutation } from "./usersApiSlice";
+import { useUpdateUserMutation, useDeleteUserMutation } from "./usersApiSlice";
 import { useNavigate } from "react-router-dom";
-import { FaSave } from "react-icons/fa";
+import { FaSave, FaTrashAlt } from "react-icons/fa";
 import { ROLES } from "../../config/roles";
 import { toast } from "react-toastify";
 
 const USER_REGEX = /^[A-z]{3,20}$/;
 const PWD_REGEX = /^[A-z0-9!@#$%]{4,12}$/;
 
-const NewUserForm = () => {
-  const [addNewUser, { isLoading, isSuccess, isError, error }] =
-    useAddNewUserMutation();
+const EditUserForm = ({ user }) => {
+  const [updateUser, { isLoading, isSuccess, isError, error }] =
+    useUpdateUserMutation();
+
+  const [
+    deleteUser,
+    { isSuccess: isDelSuccess, isError: isDelError, error: delerror },
+  ] = useDeleteUserMutation();
 
   const navigate = useNavigate();
 
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState(user.username);
   const [validUsername, setValidUsername] = useState(false);
   const [password, setPassword] = useState("");
   const [validPassword, setValidPassword] = useState(false);
-  const [roles, setRoles] = useState(["Employee"]);
+  const [roles, setRoles] = useState(user.roles);
+  const [active, setActive] = useState(user.active);
 
   useEffect(() => {
     setValidUsername(USER_REGEX.test(username));
@@ -30,13 +36,13 @@ const NewUserForm = () => {
 
   useEffect(() => {
     console.log(isSuccess);
-    if (isSuccess) {
+    if (isSuccess || isDelSuccess) {
       setUsername("");
       setPassword("");
       setRoles([]);
       navigate("/dash/users");
     }
-  }, [isSuccess, navigate]);
+  }, [isSuccess, isDelSuccess, navigate]);
 
   const onRolesChanged = (e) => {
     const values = Array.from(
@@ -55,30 +61,48 @@ const NewUserForm = () => {
   });
 
   const onSaveUserClicked = async (e) => {
-    e.preventDefault();
-    if (canSave) {
-      await addNewUser({ username, password, roles });
+    if(password){
+      await updateUser({id: user.id, username, password, roles, active})
+    }else{
+      await updateUser({id: user.id, username, roles, active})
     }
   };
 
-  const canSave =
-    [roles.length, validUsername, validPassword].every(Boolean) && !isLoading;
+  const onDeleteUserClicked = async() => {
+    await deleteUser({id: user.id})
+  };
 
-  if (isError) toast.error(error?.data?.message);
+  let canSave;
+  if (password) {
+    canSave =
+      [roles.length, validUsername, validPassword].every(Boolean) && !isLoading;
+  } else {
+    canSave = [roles.length, validUsername].every(Boolean) && !isLoading;
+  }
+
+  if(isError) toast.error(error?.data?.message)
+  if(isDelError) toast.error(delerror?.data?.message)
 
   return (
     <>
-      <form className="form" onSubmit={onSaveUserClicked}>
+      <form className="form">
         <div className="form__title-row">
-          <h2>New User</h2>
+          <h2>Edit User</h2>
           <div className="form__action-buttons">
             <button
               className="icon-button"
               title="Save"
               onClick={onSaveUserClicked}
-               disabled={!canSave}
+              disabled={!canSave}
             >
               <FaSave />
+            </button>
+            <button
+              className="icon-button"
+              title="Delete"
+              onClick={onDeleteUserClicked}
+            >
+              <FaTrashAlt />
             </button>
           </div>
         </div>
@@ -99,18 +123,34 @@ const NewUserForm = () => {
         />
 
         <label htmlFor="password" className="form__label">
-          Password:<span className="nowrap">[4-12 chars incl. !@#$%]</span>
+          Password: <span className="nowrap">[empty = no change]</span>{" "}
+          <span className="nowrap">[4-12 chars incl. !@#$%]</span>
         </label>
         <input
           type="password"
           className={`form__input ${
-            !validPassword ? "form__input--incomplete" : ""
+            password && !validPassword ? "form__input--incomplete" : ""
           }`}
           id="password"
           name="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
+
+        <label
+          htmlFor="user-active"
+          className="form__label form__checkbox-container"
+        >
+          ACTIVE:
+          <input
+            type="checkbox"
+            className="form__checkbox"
+            id="user-active"
+            name="user-active"
+            checked={active}
+            onChange={() => setActive((prev) => !prev)}
+          />
+        </label>
 
         <label htmlFor="roles" className="form__label">
           ASSIGNED ROLES:
@@ -133,4 +173,4 @@ const NewUserForm = () => {
   );
 };
 
-export default NewUserForm;
+export default EditUserForm;
