@@ -1,9 +1,13 @@
-import React from 'react'
+import { useSelector } from "react-redux";
+import { selectAllUsers } from "../users/usersApiSlice";
+import NewNoteForm from "./NewNoteForm";
+import Spinner from "../../components/Spinner";
 
 const NewNote = () => {
-  return (
-    <div>NewNote</div>
-  )
-}
+  const users = useSelector(selectAllUsers);
+  if (users) {
+    return <NewNoteForm users={users} />;
+  } else return <Spinner />;
+};
 
-export default NewNote
+export default NewNote;
